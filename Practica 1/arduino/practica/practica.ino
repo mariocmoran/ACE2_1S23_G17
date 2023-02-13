@@ -19,6 +19,16 @@ float PRESION;
 volatile int contador = 0;
 float rads = 0;
 float linealv = 0;
+//HUMEDAD ABSOLUTA
+float RH;          // humedad relativa
+float AH;           // humedad absoluta; densidad de vapor de agua
+float T;            // Temperatura
+float DS;           // DENSIDAD DE VAPOR SATURADO; se busca en tabla
+//PUNTO DE ROCÍO
+float potencia = 1.00000/8.00000;  //Para simular una raiz octava; NO SE CAMBIA
+float octava;
+float Inoctava;
+float PT;
 
 void   setup()
 {
@@ -38,20 +48,49 @@ void loop()
 {
   //DHT 11 --------------------------------------------
   Serial.println();
-
   int chk = DHT11.read(DHT11PIN);
-
+  RH = (float)DHT11.humidity;
   Serial.print("Humidity (%): ");
-  Serial.println((float)DHT11.humidity, 2);
-
+  Serial.println(RH, 2);
+  T = (float)DHT11.temperature;
   Serial.print("Temperature   (C): ");
-  Serial.println((float)DHT11.temperature, 2);
+  Serial.println(T, 2);
+  
+  //HUMEDAD ABSOLUTA ----------------------------------
+  if ((T >= 0.00) && (T < 4.00)){
+    DS = 0.004847;
+  }else if((T >= 5.00) && (T < 9.00)){
+    DS = 0.006796;
+  }else if((T >= 10.00) && (T < 14.00)){
+    DS = 0.009401;
+  }else if((T >= 15.00) && (T < 19.00)){
+    DS = 0.01283;
+  }else if((T >= 20.00) && (T < 24.00)){
+    DS = 0.01730;
+  }else if((T >= 25.00) && (T < 29.00)){
+    DS = 0.02305;
+  }else if((T >= 30.00) && (T < 34.00)){
+    DS = 0.03038;
+  }else if((T >= 35.00) && (T < 39.00)){
+    DS = 0.03964;
+  }
+  AH = (RH*DS)/100;
+  Serial.print("Humedad Absoluta: ");
+  Serial.print(AH);
+  Serial.print(" kg/m3");
+  Serial.println("");
+  //PUNTO DE ROCÍO
+  Inoctava = RH/100;
+  octava = pow(Inoctava, potencia);
+  PT = octava*(112+(0.9*T))+(0.1*T)-112;
+  Serial.print("Punto de Rocio: ");
+  Serial.print(PT);
+  Serial.print(" C td");
+  Serial.println("");
 
   //BMP280 --------------------------------------------
-  /*
-  TEMPERATURA = bmp.readTemperature();
-  PRESION = bmp.readPressure()/100; //Pascales
-  */
+  /* TEMPERATURA = bmp.readTemperature();
+  PRESION = bmp.readPressure()/100; //Pascales */
   Serial.print("Temperatura (BPM280): ");
   Serial.print(sensor.readTemperature());
   Serial.print(" (C)");
