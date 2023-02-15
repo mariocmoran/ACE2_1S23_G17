@@ -1,9 +1,9 @@
 
-
 //Imagenes
 var img, loc, cal, imgtemp, imghrel, imghabs, imgvel, imgdir, imgpre;
 //Para la hora
 let last_minute = 0;
+let last_second = 0;
 //Datos
 let temp=0, hrel=0, habs=0, vel=0, pre=0;
 let dir = "N";
@@ -12,6 +12,11 @@ let dir = "N";
 let overtemp = false, overhrel = false, overhabs = false,overdir = false, overvel = false, overpre = false;
 let ctemp = false, chrel = false, chabs = false,cdir = false, cvel = false, cpre = false;
 let size = 35;
+
+//GRAFICAS
+var tempgra = false, hrelgra = false, habsgra = false, dirgra = false, velgra = false, pregra = false;
+var tempdata = [], hreldata= [], habsdata= [], dirdata= [], veldata= [], predata= [];
+var datos;
 
 
 function preload() {
@@ -50,6 +55,7 @@ function setup() {
   textFont('Arial',20);
   textStyle(BOLD);
   last_minute = minute();
+  last_second = second();
   let h = hour();
   text(nf(h,2) + ":" + nf(last_minute,2), 225, 25);
   
@@ -140,22 +146,42 @@ function draw() {
   
   if (!ctemp){
     text(nf(temp,2), 375, 160);
+    tempgra = false;
+  }else{
+    graficarTemp();
+    tempgra = true;
   }
+  
   if (!chrel){
     text(nf(hrel,2), 665, 160);
+  }else{
+    graficarHrel();
+    hrelgra = true;
   }
+  
   if (!chabs){
     text(nf(habs,2), 925, 160);
+  }else{
+    graficarHabs();
+    habsgra = true;
   }
   
   if (!cvel){
     text(nf(vel,2), 365, 425);
+  }else{
+    graficarVel();
+    velgra = true;
   }
+  
   if (!cdir){
     text(dir, 675, 425);
   }
+  
   if (!cpre){
     text(nf(pre,3), 885, 425);
+  }else{
+    graficarPre();
+    pregra=true;
   }
   
   //Unidades
@@ -186,6 +212,13 @@ function draw() {
   // ------------------------- -PARA CAMBIAR HORA ------------------------------------
   var h = hour();
   var m = minute();
+  var s = second();
+  
+  if(s != last_second){
+    // -------------------------------- PARA REFRESCAR DATO -------------------------------
+    loadJSON('http://127.0.0.1:5000/nuevo',gotData);
+    last_second = s;
+  }
   if(m != last_minute){
     
     //FONDO
@@ -218,10 +251,117 @@ function draw() {
     text("PRAC 1", 50, height/2);
     
 
-    last_minute = m;
-    
-    // -------------------------------- PARA REFRESCAR DATO -------------------------------
-    loadJSON('http://127.0.0.1:5000/nuevo',gotData);
+    last_minute = m;   
+  }
+  
+}
+
+function graficarTemp(){
+  if(!tempgra){
+    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);   
+  }
+  plot = new GPlot(this);
+  plot.setPos(350, 20);
+  plot.setDim(120,100);
+  // Set the plot title and the axis labels
+  plot.getXAxis().setAxisLabelText("No.");
+  plot.getYAxis().setAxisLabelText("Temperatura (°C)");
+  // Add the points
+  plot.setPoints(tempdata);
+  // Draw it!
+  plot.defaultDraw();
+  
+}
+
+function graficarHrel(){
+  if(!hrelgra){
+    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+  }
+  
+  plot = new GPlot(this);
+  plot.setPos(630, 20);
+  plot.setDim(120,100);
+  // Set the plot title and the axis labels
+  plot.getXAxis().setAxisLabelText("No.");
+  plot.getYAxis().setAxisLabelText("Húmedad Rel. (°C)");
+  // Add the points
+  plot.setPoints(hreldata);
+  // Draw it!
+  plot.defaultDraw();
+  
+}
+
+function graficarHabs(){
+  if(!habsgra){
+    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+  }
+  
+  plot = new GPlot(this);
+  plot.setPos(910, 20);
+  plot.setDim(120,100);
+  // Set the plot title and the axis labels
+  plot.getXAxis().setAxisLabelText("No.");
+  plot.getYAxis().setAxisLabelText("Húmedad Abs. (g/m3)");
+  // Add the points
+  plot.setPoints(habsdata);
+  // Draw it!
+  plot.defaultDraw();
+  
+}
+
+function graficarVel(){
+  if(!velgra){
+    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+  }
+  
+  plot = new GPlot(this);
+  plot.setPos(305, 280);
+  plot.setDim(120,100);
+  // Set the plot title and the axis labels
+  plot.getXAxis().setAxisLabelText("No.");
+  plot.getYAxis().setAxisLabelText("Velocidad (km/h)");
+  // Add the points
+  plot.setPoints(veldata);
+  // Draw it!
+  plot.defaultDraw();
+  
+}
+
+function graficarPre(){
+  if(!pregra){
+    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+  }
+  
+  plot = new GPlot(this);
+  plot.setPos(865, 280);
+  plot.setDim(120,100);
+  // Set the plot title and the axis labels
+  plot.getXAxis().setAxisLabelText("No.");
+  plot.getYAxis().setAxisLabelText("Presión B. (mmHg)");
+  // Add the points
+  plot.setPoints(predata);
+  // Draw it!
+  plot.defaultDraw();
+  
+}
+
+function gotDataGraph(data){
+  print(data);
+  
+  tempdata = [];
+  habsdata = [];
+  hreldata = [];
+  veldata = [];
+  dirdata = [];
+  predata = [];
+  
+  for (let i = 0; i < data.length; i++) {
+      tempdata[i] = new GPoint(i, data[i].Temperatura_A);
+      habsdata[i] = new GPoint(i, data[i].Humedad_A); 
+      hreldata[i] = new GPoint(i, data[i].Humedad_R); 
+      veldata[i] = new GPoint(i, data[i].Velocidad_V); 
+      //tempdata[i] = new GPoint(i, data[i].Temperatura_A); 
+      predata[i] = new GPoint(i, data[i].Presion_B); 
   }
 }
 
