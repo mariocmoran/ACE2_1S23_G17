@@ -20,9 +20,10 @@ def write_read():
         dict_json = json.loads(data)
         print(dict_json)
         saveData(dict_json)
+        
+        return dict_json
     except json.JSONDecodeError as e:
         print("json: ", e)
-    return dict_json
 
 while True:
     value = write_read()

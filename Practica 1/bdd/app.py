@@ -27,7 +27,7 @@ conexion=MySQL(app)
 def Info_datos():
     try:
         cursor = conexion.connection.cursor()
-        sql= "SELECT id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B FROM informacion_metereologica"
+        sql= "SELECT id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B FROM mediciones"
         cursor.execute(sql)
         datos = cursor.fetchall()
         print(datos)
@@ -45,14 +45,22 @@ def ingresar_info():
     # print(request.json)
     try:
         cursor = conexion.connection.cursor()
-        sql = """INSERT INTO informacion_metereologica (id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B) 
-        VALUES ('{0}', '{1}', {2},"{3}","{4}","{5}","{6}",{7})""".format(request.json['id'],
-        request.json["Dia"],request.json["Temperatura_A"],request.json["Humedad_R"],request.json["Humedad_A"],request.json["Velocidad_V"],
-        request.json["Direccion_V"],request.json["Presion_B"])
+        sql = """INSERT INTO mediciones (id, dia, Temperatura_A, Humedad_R, Humedad_A, Punto_R, Velocidad_V, Direccion_V, Presion_B) 
+            VALUES ({0},{1},{2},{3},{4},{5},{6},{7},{8})""".format(
+                request.json['id'],
+                request.json["dia"],
+                request.json["Temperatura_A"],
+                request.json["Humedad_R"],
+                request.json["Humedad_A"],
+                request.json["Punto_R"],
+                request.json["Velocidad_V"],
+                request.json["Direccion_V"],
+                request.json["Presion_B"])
         cursor.execute(sql)
         conexion.connection.commit()  # Confirma la acción de inserción.
         return jsonify({'mensaje': "Curso registrado."})
     except Exception as ex:
+        print(ex)
         return jsonify({'mensaje': "Error"})
 
 ##======================Borrar Informacion ============================
@@ -60,7 +68,7 @@ def ingresar_info():
 def eliminar(id):
     try:
           cursor = conexion.connection.cursor()
-          sql = "DELETE FROM informacion_metereologica WHERE id= '{0}'".format(id)
+          sql = "DELETE FROM mediciones WHERE id= '{0}'".format(id)
           cursor.execute(sql)
           conexion.connection.commit()  # Confirma la acción de inserción.
           return jsonify({"Mensaje":"Informacion Eliminado"})
@@ -77,7 +85,7 @@ def Actualizar(id):
 
         try:
                 cursor = conexion.connection.cursor()
-                sql = """UPDATE informacion_metereologica SET Dia= '{0}', Temperatura_A= '{1}', Humedad_R= '{2}', Humedad_A= '{3}', Velocidad_V= '{4}', Direccion_V= '{5}', Presion_B={6} 
+                sql = """UPDATE mediciones SET Dia= '{0}', Temperatura_A= '{1}', Humedad_R= '{2}', Humedad_A= '{3}', Velocidad_V= '{4}', Direccion_V= '{5}', Presion_B={6} 
                 WHERE id = '{7}'""".format(request.json["Dia"],request.json["Temperatura_A"],request.json["Humedad_R"],request.json["Humedad_A"],request.json["Velocidad_V"],
                 request.json["Direccion_V"],request.json["Presion_B"],id) 
                 cursor.execute(sql)
@@ -93,7 +101,7 @@ def Actualizar(id):
 def Ultimos_datos():
     try:
         cursor = conexion.connection.cursor()
-        sql='SELECT * FROM informacion_metereologica ORDER BY id DESC LIMIT 1'
+        sql='SELECT * FROM mediciones ORDER BY id DESC LIMIT 1'
         #sql= "SELECT id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B FROM informacion_metereologica"
         cursor.execute(sql)
         datos = cursor.fetchone()

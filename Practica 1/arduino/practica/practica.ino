@@ -31,6 +31,9 @@ float potencia = 1.00000/8.00000;  //Para simular una raiz octava; NO SE CAMBIA
 float octava;
 float Inoctava;
 float PT;
+//DIRECCION DEL VIENTO
+int dirv;
+int valor;
 //CONEXION
 StaticJsonDocument<500> doc;
 int id = 100;
@@ -124,6 +127,31 @@ void loop()
   //Serial.println(" km/h");
   contador = 0;
 
+  //DIRECCION DEL VIENTO-------------------------------
+  valor = analogRead(A0);
+  //Imprimimos por el monitor serie
+  if(valor == 0 || valor == 1023){
+    dirv = 2;//sur
+  }else if(valor > 0 && valor < 116){
+    dirv = 2;//sur
+  }else if(valor > 132 && valor < 240){
+    dirv = 3;//este
+  }else if(valor > 240 && valor < 420){
+    dirv = 3;//este
+  }else if(valor > 420 && valor < 590){
+    dirv = 1;//norte
+  }else if(valor > 590 && valor < 750){
+    dirv = 1;//norte
+  }else if(valor > 750 && valor < 900){
+    dirv = 4;//oeste
+  }else if(valor > 904 && valor < 1023){
+    dirv = 4;//oeste
+  }
+  // N = 1
+  // S = 2
+  // E = 3
+  // O = 4
+
   //CONEXION
   generarJson();
   serializeJson(doc, Serial);
@@ -139,12 +167,12 @@ void interrupcion0() {
 
 void generarJson() {
   doc["id"] = id;
-  doc["Dia"] = "Miercoles";
+  doc["dia"] = 1;
   doc["Temperatura_A"] = T;
   doc["Humedad_R"] = RH;
   doc["Humedad_A"] = AH;
   doc["Punto_R"] = PT;
   doc["Velocidad_V"] = linealv;
-  doc["Direccion_V"] = id;
+  doc["Direccion_V"] = dirv;
   doc["Presion_B"] = P;
 }
