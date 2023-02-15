@@ -27,13 +27,13 @@ conexion=MySQL(app)
 def Info_datos():
     try:
         cursor = conexion.connection.cursor()
-        sql= "SELECT id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B FROM mediciones"
+        sql= "SELECT id, dia, Temperatura_A, Humedad_R, Humedad_A, Punto_R, Velocidad_V, Direccion_V, Presion_B FROM mediciones"
         cursor.execute(sql)
         datos = cursor.fetchall()
         print(datos)
         Info_al=[]
         for fila in datos:
-            Datos_E={"id":fila[0],"Dia":fila[1],"Temperatura_A":fila[2],"Humedad_R":fila[3],"Humedad_A":fila[4],"Velocidad_V":fila[5],"Direccion_V":fila[6],"Presion_B":fila[7]}
+            Datos_E={"id":fila[0],"dia":fila[1],"Temperatura_A":fila[2],"Humedad_R":fila[3],"Humedad_A":fila[4],"Punto_R":fila[5],"Velocidad_V":fila[6],"Direccion_V":fila[7],"Presion_B":fila[8]}
             Info_al.append(Datos_E)
         return jsonify({"Informacion Guardada":Info_al})
 
