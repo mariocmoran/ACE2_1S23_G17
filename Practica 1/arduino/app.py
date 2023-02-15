@@ -2,6 +2,7 @@ from flask import Flask, jsonify,request
 from flask_mysqldb import MySQL
 from conexion_base import config
 from flask_cors import CORS,cross_origin
+
 #import serial,time
 
 

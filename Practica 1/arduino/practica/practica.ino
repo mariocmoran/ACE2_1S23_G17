@@ -1,3 +1,4 @@
+#include <ArduinoJson.h>
 //DHT11
 #include <dht11.h>
 #define DHT11PIN 4
@@ -15,6 +16,7 @@ Adafruit_BMP280 bmp;
 Adafruit_BMP280 sensor(BMP_CS);
 float TEMPERATURA;
 float PRESION;
+float P;
 //ANEMOMETRO
 volatile int contador = 0;
 float rads = 0;
@@ -29,32 +31,44 @@ float potencia = 1.00000/8.00000;  //Para simular una raiz octava; NO SE CAMBIA
 float octava;
 float Inoctava;
 float PT;
+//CONEXION
+StaticJsonDocument<500> doc;
+int id = 100;
 
 void   setup()
 {
   Serial.begin(9600);
-  Serial.println("Iniciando:");
+  //Serial.println("Iniciando:");
   //dht11 (nothing)
   //bmp280c
   if (!sensor.begin()) {
-    Serial.println("BMP280 no encontrado.");
+    //Serial.println("BMP280 no encontrado.");
     while(1);
   }
   //anemometro
   attachInterrupt(0, interrupcion0, RISING);
 }
 
+// temperatura                T
+// humedad realtiva           RH
+// humedad absoluta           AH
+// punto de rocio             PT
+// presión barométrica        P
+// velocidad del viento       linealv
+// dirección del viento 			0
+
+
 void loop()
 {
   //DHT 11 --------------------------------------------
-  Serial.println();
+  //Serial.println();
   int chk = DHT11.read(DHT11PIN);
   RH = (float)DHT11.humidity;
-  Serial.print("Humidity (%): ");
-  Serial.println(RH, 2);
+  //Serial.print("Humidity (%): ");
+  //Serial.println(RH, 2);
   T = (float)DHT11.temperature;
-  Serial.print("Temperature   (C): ");
-  Serial.println(T, 2);
+  //Serial.print("Temperature   (C): ");
+  //Serial.println(T, 2);
   
   //HUMEDAD ABSOLUTA ----------------------------------
   if ((T >= 0.00) && (T < 4.00)){
@@ -75,43 +89,62 @@ void loop()
     DS = 0.03964;
   }
   AH = (RH*DS)/100;
-  Serial.print("Humedad Absoluta: ");
-  Serial.print(AH);
-  Serial.print(" kg/m3");
-  Serial.println("");
+  //Serial.print("Humedad Absoluta: ");
+  //Serial.print(AH);
+  //Serial.print(" kg/m3");
+  //Serial.println("");
   //PUNTO DE ROCÍO
   Inoctava = RH/100;
   octava = pow(Inoctava, potencia);
   PT = octava*(112+(0.9*T))+(0.1*T)-112;
-  Serial.print("Punto de Rocio: ");
-  Serial.print(PT);
-  Serial.print(" C td");
-  Serial.println("");
+  //Serial.print("Punto de Rocio: ");
+  //Serial.print(PT);
+  //Serial.print(" C td");
+  //Serial.println("");
 
   //BMP280 --------------------------------------------
   /* TEMPERATURA = bmp.readTemperature();
   PRESION = bmp.readPressure()/100; //Pascales */
-  Serial.print("Temperatura (BPM280): ");
-  Serial.print(sensor.readTemperature());
-  Serial.print(" (C)");
-  Serial.println("");
+  //Serial.print("Temperatura (BPM280): ");
+  //Serial.print(sensor.readTemperature());
+  //Serial.print(" (C)");
+  //Serial.println("");
   
-  Serial.print("Presion: ");
-  Serial.print((sensor.readPressure()/133.3));
-  Serial.print(" mmHg");
-  Serial.println("");
+  //Serial.print("Presion: ");
+  P = (sensor.readPressure()/133.3);
+  //Serial.print(P);
+  //Serial.print(" mmHg");
+  //Serial.println("");
 
   //ANEMOMETRO ---------------------------------------
   // V = w*r
   rads = (contador*20)*(2*3.1416)/60;
   linealv = (rads*0.0375)*3600/1000;
-  Serial.print(linealv);
-  Serial.println(" km/h");
+  //Serial.print(linealv);
+  //Serial.println(" km/h");
   contador = 0;
 
+  //CONEXION
+  generarJson();
+  serializeJson(doc, Serial);
+  Serial.println();
+  
+  id++;
   delay(2000);
 }
 
 void interrupcion0() {
   contador++;  
+}
+
+void generarJson() {
+  doc["id"] = id;
+  doc["Dia"] = "Miercoles";
+  doc["Temperatura_A"] = T;
+  doc["Humedad_R"] = RH;
+  doc["Humedad_A"] = AH;
+  doc["Punto_R"] = PT;
+  doc["Velocidad_V"] = linealv;
+  doc["Direccion_V"] = id;
+  doc["Presion_B"] = P;
 }
