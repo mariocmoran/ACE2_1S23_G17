@@ -15,7 +15,8 @@ let size = 35;
 
 //GRAFICAS
 var tempgra = false, hrelgra = false, habsgra = false, dirgra = false, velgra = false, pregra = false;
-var tempdata = [], hreldata= [], habsdata= [], dirdata= [], veldata= [], predata= [];
+var tempdata = [], hreldata= [], habsdata= [], veldata= [], predata= [];
+var dirdata = [0,0,0,0];
 var datos;
 
 
@@ -64,7 +65,7 @@ function setup() {
   textStyle(BOLD);
   text("PRAC 1", 50, height/2);
   
-  loadJSON('http://127.0.0.1:5000/nuevo',gotData);
+  loadJSON('http://127.0.0.1:5000/UltimoDato',gotData);
 }
 
 
@@ -142,10 +143,10 @@ function draw() {
   // --------------------------- DATOS ACTUALES ------------------------------------------
   //pre += 1;
   //Data
-  textFont("Garamond",85);
+  textFont("Garamond",80);
   
   if (!ctemp){
-    text(nf(temp,2), 375, 160);
+    text(nf(round(temp,2),2,2), 325, 165);
     tempgra = false;
   }else{
     graficarTemp();
@@ -153,32 +154,42 @@ function draw() {
   }
   
   if (!chrel){
-    text(nf(hrel,2), 665, 160);
+    text(nf(round(hrel,2),2,2), 600, 165);
+    hrelgra = false;
   }else{
     graficarHrel();
     hrelgra = true;
   }
   
   if (!chabs){
-    text(nf(habs,2), 925, 160);
+    text(nf(round(habs,3),1,3), 870, 165);
+    habsgra = false;
   }else{
     graficarHabs();
     habsgra = true;
   }
   
   if (!cvel){
-    text(nf(vel,2), 365, 425);
+    text(nf(round(vel,2),2,2), 310, 425);
+    velgra = false;
   }else{
     graficarVel();
     velgra = true;
   }
   
   if (!cdir){
-    text(dir, 675, 425);
+    text(dir, 685, 425);
+    dirgra = false;
+  }else{
+    graficarDir();
+    dirgra=true;
   }
   
+  fill(0);
+  textFont("Garamond",80);
   if (!cpre){
-    text(nf(pre,3), 885, 425);
+    text(nf(round(pre,2),3,2), 890, 410);
+    pregra = false;
   }else{
     graficarPre();
     pregra=true;
@@ -186,26 +197,27 @@ function draw() {
   
   //Unidades
   
-  textFont("Garamond",40);
+  textFont("Garamond",35);
+  
   
   if (!ctemp){
-    text("°C", 465, 160);
+    text("°C", 500, 165);
   }
   
   if (!chrel){
-    text("°C", 760, 160);
+    text("°C", 780, 165);
   }
   
   if (!chabs){
-    text("g/m3", 1020, 160);
+    text("g/m3", 1045, 165);
   }
   
   if (!cvel){
-    text("km/h", 455, 425);
+    text("km/h", 485, 425);
   }
   
   if (!cpre){
-    text("mmHg", 1010, 425);
+    text("mmHg", 945, 445);
   }
   
 
@@ -216,7 +228,7 @@ function draw() {
   
   if(s != last_second){
     // -------------------------------- PARA REFRESCAR DATO -------------------------------
-    loadJSON('http://127.0.0.1:5000/nuevo',gotData);
+    loadJSON('http://127.0.0.1:5000/UltimoDato',gotData);
     last_second = s;
   }
   if(m != last_minute){
@@ -258,7 +270,7 @@ function draw() {
 
 function graficarTemp(){
   if(!tempgra){
-    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);   
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);   
   }
   plot = new GPlot(this);
   plot.setPos(350, 20);
@@ -275,7 +287,7 @@ function graficarTemp(){
 
 function graficarHrel(){
   if(!hrelgra){
-    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);
   }
   
   plot = new GPlot(this);
@@ -293,7 +305,7 @@ function graficarHrel(){
 
 function graficarHabs(){
   if(!habsgra){
-    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);
   }
   
   plot = new GPlot(this);
@@ -311,7 +323,7 @@ function graficarHabs(){
 
 function graficarVel(){
   if(!velgra){
-    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);
   }
   
   plot = new GPlot(this);
@@ -329,7 +341,7 @@ function graficarVel(){
 
 function graficarPre(){
   if(!pregra){
-    loadJSON('http://127.0.0.1:5000/data',gotDataGraph);
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);
   }
   
   plot = new GPlot(this);
@@ -345,6 +357,56 @@ function graficarPre(){
   
 }
 
+function graficarDir(){
+  if(!dirgra){
+    loadJSON('http://127.0.0.1:5000/Datos',gotDataGraph);
+  }
+  
+  var dataCirculo = [];
+  var cantD = dirdata[0] + dirdata[1] + dirdata[2] + dirdata[3];
+  
+  for(var j = 0; j < 4; j++){
+    dataCirculo[j] = (dirdata[j] / cantD)*360;
+  }
+  
+  var lastAngle = 0;
+  var vinit = 360;
+  for (var i = 0; i < 4; i++) {
+    var gray = map(i, 0, 4, 0, 255);
+    fill(gray);
+    arc(670, 400, 150, 150, lastAngle, lastAngle+radians(dataCirculo[i]));
+    lastAngle += radians(dataCirculo[i]);
+    rect(750, vinit, 10,10);
+    fill(0);
+    textFont("Garamond",15);
+    
+    var t;
+    
+    switch(i){
+      case 0:
+        t = "S";
+      break;
+      case 1:
+        t = "N";
+      break;
+      case 2:
+        t = "E";
+      break;
+      case 3:
+        t = "O";
+      break;
+      default:
+        t = "";
+      break;
+    }
+    
+    text(t + " (" + round(100*dataCirculo[i]/360, 2) + "%)", 765, vinit + 8);
+    vinit += 20;
+    
+  }
+  
+}
+
 function gotDataGraph(data){
   print(data);
   
@@ -352,8 +414,8 @@ function gotDataGraph(data){
   habsdata = [];
   hreldata = [];
   veldata = [];
-  dirdata = [];
   predata = [];
+  dirdata = [0,0,0,0];
   
   for (let i = 0; i < data.length; i++) {
       tempdata[i] = new GPoint(i, data[i].Temperatura_A);
@@ -362,7 +424,26 @@ function gotDataGraph(data){
       veldata[i] = new GPoint(i, data[i].Velocidad_V); 
       //tempdata[i] = new GPoint(i, data[i].Temperatura_A); 
       predata[i] = new GPoint(i, data[i].Presion_B); 
+      
+      switch(data[i].Direccion_V){
+        case 1:
+          dirdata[0] += 1;
+        break;
+        case 2:
+          dirdata[1] += 1;
+        break;
+        case 3:
+          dirdata[2] += 1;
+        break;
+        case 4:
+          dirdata[3] += 1;
+        break;
+        default:
+        break;
+      }
+      
   }
+  
 }
 
 function gotData(data){
@@ -371,8 +452,25 @@ function gotData(data){
   habs = data.Humedad_A;
   hrel = data.Humedad_R;
   vel = data.Velocidad_V;
-  dir = data.Direccion_V;
   pre = data.Presion_B;
+  
+  switch(data.Direccion_V){
+    case 1:
+      dir = 'S';
+    break;
+    case 2:
+      dir = 'N';
+    break;
+    case 3:
+      dir = 'E';
+    break;
+    case 4:
+      dir = 'O';
+    break;
+    default:
+      dir = 'Er';
+    break;
+  }
   
 }
 

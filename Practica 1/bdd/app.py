@@ -35,7 +35,7 @@ def Info_datos():
         for fila in datos:
             Datos_E={"id":fila[0],"dia":fila[1],"Temperatura_A":fila[2],"Humedad_R":fila[3],"Humedad_A":fila[4],"Punto_R":fila[5],"Velocidad_V":fila[6],"Direccion_V":fila[7],"Presion_B":fila[8]}
             Info_al.append(Datos_E)
-        return jsonify({"Informacion Guardada":Info_al})
+        return jsonify(Info_al)
 
     except Exception as ex:
        return jsonify({"mensaje": "Error"})
@@ -109,7 +109,7 @@ def Ultimos_datos():
         
         if datos !=0:
           Datos_E={"id":datos[0],"Dia":datos[1],"Temperatura_A":datos[2],"Humedad_R":datos[3],"Humedad_A":datos[4],"Velocidad_V":datos[5],"Direccion_V":datos[6],"Presion_B":datos[7]}
-          return jsonify({"Mensaje": Datos_E," Mensaje2": "Ultimo Curso"})
+          return jsonify(Datos_E)
         else:
             return jsonify({"Mensaje": "Curso Encontrado","Hola":"Error"})
 
