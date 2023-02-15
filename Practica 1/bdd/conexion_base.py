@@ -3,8 +3,8 @@ class DevelopmentConfig():
     MYSQL_HOST="localhost"
     PORT=3306
     MYSQL_USER="root"
-    MYSQL_PASSWORD="Practica1"
-    MYSQL_DB="estación_metereologica"
+    MYSQL_PASSWORD=""
+    MYSQL_DB="estaci__n_metereologica"
 
    
 config = {

@@ -43,20 +43,17 @@ def Info_datos():
 @app.route('/Datos', methods=['POST'])
 def ingresar_info():
     # print(request.json)
-
-
-        try:
-         
-                cursor = conexion.connection.cursor()
-                sql = """INSERT INTO informacion_metereologica (id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B) 
-                VALUES ('{0}', '{1}', {2},"{3}","{4}","{5}","{6}",{7})""".format(request.json['id'],
-                request.json["Dia"],request.json["Temperatura_A"],request.json["Humedad_R"],request.json["Humedad_A"],request.json["Velocidad_V"],
-                request.json["Direccion_V"],request.json["Presion_B"])
-                cursor.execute(sql)
-                conexion.connection.commit()  # Confirma la acción de inserción.
-                return jsonify({'mensaje': "Curso registrado."})
-        except Exception as ex:
-            return jsonify({'mensaje': "Error"})
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """INSERT INTO informacion_metereologica (id, Dia, Temperatura_A, Humedad_R, Humedad_A, Velocidad_V, Direccion_V, Presion_B) 
+        VALUES ('{0}', '{1}', {2},"{3}","{4}","{5}","{6}",{7})""".format(request.json['id'],
+        request.json["Dia"],request.json["Temperatura_A"],request.json["Humedad_R"],request.json["Humedad_A"],request.json["Velocidad_V"],
+        request.json["Direccion_V"],request.json["Presion_B"])
+        cursor.execute(sql)
+        conexion.connection.commit()  # Confirma la acción de inserción.
+        return jsonify({'mensaje': "Curso registrado."})
+    except Exception as ex:
+        return jsonify({'mensaje': "Error"})
 
 ##======================Borrar Informacion ============================
 @app.route("/Datos/<id>",methods=["DELETE"])    
@@ -107,10 +104,6 @@ def Ultimos_datos():
           return jsonify({"Mensaje": Datos_E," Mensaje2": "Ultimo Curso"})
         else:
             return jsonify({"Mensaje": "Curso Encontrado","Hola":"Error"})
-
-
-           
-       
 
     except Exception as ex:
        return jsonify({"mensaje": "Error"})

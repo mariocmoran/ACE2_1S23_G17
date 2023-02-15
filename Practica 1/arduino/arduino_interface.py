@@ -13,7 +13,6 @@ def saveData(args):
     if response.status_code == 200:
         print(response.content)
 
-
 def write_read():
     time.sleep(2)
     data = arduino.readline().decode("utf-8")
