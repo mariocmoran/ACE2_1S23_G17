@@ -35,10 +35,12 @@ def Info_datos():
         for fila in datos:
             Datos_E={"id":fila[0],"dia":fila[1],"Temperatura_A":fila[2],"Humedad_R":fila[3],"Humedad_A":fila[4],"Punto_R":fila[5],"Velocidad_V":fila[6],"Direccion_V":fila[7],"Presion_B":fila[8]}
             Info_al.append(Datos_E)
+        print("/Datos GET")
+        print(Info_al)
         return jsonify(Info_al)
 
     except Exception as ex:
-       return jsonify({"mensaje": "Error"})
+       return jsonify({"mensaje": "Error 1"})
 ##==============================Ingresa Los Datos==========================
 @app.route('/Datos', methods=['POST'])
 def ingresar_info():
@@ -61,7 +63,7 @@ def ingresar_info():
         return jsonify({'mensaje': "Curso registrado."})
     except Exception as ex:
         print(ex)
-        return jsonify({'mensaje': "Error"})
+        return jsonify({'mensaje': "Error 2"})
 
 ##======================Borrar Informacion ============================
 @app.route("/Datos/<id>",methods=["DELETE"])    
@@ -90,6 +92,7 @@ def Actualizar(id):
                 request.json["Direccion_V"],request.json["Presion_B"],id) 
                 cursor.execute(sql)
                 conexion.connection.commit()  # Confirma la acción de actualización.
+                print("put /datos/<id>")
                 return jsonify({'mensaje': "Curso actualizado."})
             
         except Exception as ex:
@@ -106,13 +109,13 @@ def Ultimos_datos():
         cursor.execute(sql)
         datos = cursor.fetchone()
         
-        
         if datos !=0:
-          Datos_E={"id":datos[0],"Dia":datos[1],"Temperatura_A":datos[2],"Humedad_R":datos[3],"Humedad_A":datos[4],"Velocidad_V":datos[5],"Direccion_V":datos[6],"Presion_B":datos[7]}
+          Datos_E={"id":datos[0],"dia":datos[1],"Temperatura_A":datos[2],"Humedad_R":datos[3],"Humedad_A":datos[4],"Punto_R":datos[5],"Velocidad_V":datos[6],"Direccion_V":datos[7],"Presion_B":datos[8]}
+          print("/UltimoDato GET")
+          print(Datos_E)
           return jsonify(Datos_E)
         else:
             return jsonify({"Mensaje": "Curso Encontrado","Hola":"Error"})
-
     except Exception as ex:
        return jsonify({"mensaje": "Error"})
 

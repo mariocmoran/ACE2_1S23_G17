@@ -230,6 +230,7 @@ function draw() {
     // -------------------------------- PARA REFRESCAR DATO -------------------------------
     loadJSON('http://127.0.0.1:5000/UltimoDato',gotData);
     last_second = s;
+    print("hola");
   }
   if(m != last_minute){
     

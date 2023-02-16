@@ -130,9 +130,7 @@ void loop()
   //DIRECCION DEL VIENTO-------------------------------
   valor = analogRead(A0);
   //Imprimimos por el monitor serie
-  if(valor == 0 || valor == 1023){
-    dirv = 2;//sur
-  }else if(valor > 0 && valor < 116){
+  if(valor > 0 && valor < 116){
     dirv = 2;//sur
   }else if(valor > 132 && valor < 240){
     dirv = 3;//este
@@ -146,6 +144,8 @@ void loop()
     dirv = 4;//oeste
   }else if(valor > 904 && valor < 1023){
     dirv = 4;//oeste
+  } else {
+    dirv = 2;//sur    
   }
   // N = 1
   // S = 2
