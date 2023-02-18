@@ -36,7 +36,7 @@ int dirv;
 int valor;
 //CONEXION
 StaticJsonDocument<500> doc;
-int id = 100;
+int id = 900;
 
 void   setup()
 {
@@ -167,7 +167,7 @@ void interrupcion0() {
 
 void generarJson() {
   doc["id"] = id;
-  doc["dia"] = 1;
+  doc["dia"] = 3;
   doc["Temperatura_A"] = T;
   doc["Humedad_R"] = RH;
   doc["Humedad_A"] = AH;
