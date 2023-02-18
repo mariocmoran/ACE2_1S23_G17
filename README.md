@@ -1,7 +1,7 @@
 # ACE2_1S23_G17
 LABORATORIO ARQUITECTURA DE COMPUTADORES Y ENSAMBLADORES 2 Sección N
 
-## Grupo 7
+## Grupo 17
 ### Integrantes
 
 | Nombre                           | Carné                                      |
