@@ -94,8 +94,8 @@ int button4=17;
 const int buzzer = 24;
 const int songspeed = 1.5;
 
-int countdown_time = 124;
-
+int countdown_time = 90;
+int rest_time = 30;
 // DURACION DE LAS NOTAS DE LA CANCION -------------------------------------------------------------------
 int duration[] = {         //duration of each note (in ms) Quarter Note is set to 250 ms
   125, 125, 250, 125, 125, 
@@ -330,97 +330,100 @@ struct struct_digits IntToDigits(int n){
   int d;
 
   // provisional
-  float div = n/60;
-  float minutos = floor(div);
-  float segundos = floor((div - minutos)*100);
+  float div = (float)n/60;
+  int minutos = (int)floor(div);
+  int segundos = (int)round((div - minutos)*60);
+  
+  /*Serial.print("minutos -> ");
+  Serial.println(minutos);
+  Serial.print("segundos -> ");
+  Serial.println(segundos);*/
   if (minutos > 0) {
     String minutos_s = String(minutos);
     String segundos_s = String(segundos);
+    /*Serial.print("string minutos -> ");
+    Serial.println(minutos_s);
+    Serial.print("string segundos -> ");
+    Serial.println(segundos_s);*/
+    //Serial.print("minutos length -> ");
+    //Serial.println(minutos_s.length());
     if (minutos_s.length() == 2) {
       // Prepare the character array (the buffer) 
       char char_array[minutos_s.length()];
       // Copy it over 
       minutos_s.toCharArray(char_array, minutos_s.length());
-
+      /*
+      Serial.print("char minutos -> ");
+      Serial.print(char_array[0]);
+      Serial.print(" ");
+      Serial.println(char_array[0]);*/
       dig.digit[0] = String(char_array[0]).toInt();
       dig.digit[1] = String(char_array[1]).toInt();
     } else if (minutos_s.length() == 1) {
-      //split
+      //split      
       dig.digit[1] = minutos_s.toInt();
+      /*Serial.print("char minutos digit - toint-> ");
+      Serial.print(dig.digit[1]);
+      Serial.print(" ");
+      Serial.println(minutos_s.toInt());*/
     }
+    //Serial.print("segundos length -> ");
+    //Serial.println(segundos_s.length());
     if (segundos_s.length() == 2) {
-      // Prepare the character array (the buffer) 
-      char char_array[segundos_s.length()];
-      // Copy it over 
-      segundos_s.toCharArray(char_array, segundos_s.length());
-
-      dig.digit[2] = String(char_array[0]).toInt();
-      dig.digit[3] = String(char_array[1]).toInt();
+      // prueba
+      String n1 = segundos_s.substring(0,1);
+      String n2 = segundos_s.substring(1,2);
+      /*
+      Serial.print("string segundos n1 n2 -> ");
+      Serial.print(n1);
+      Serial.print(" ");
+      Serial.print(n2);*/
+      dig.digit[2] = n1.toInt();
+      dig.digit[3] = n2.toInt();
     } else if (segundos_s.length() == 1) {
       //split
-      dig.digit[1] = segundos_s.toInt();
+      dig.digit[3] = segundos_s.toInt();
     }
   } else {
-    float segs = floor(div*100);
+    int segs = (int)round(div*60);
     String segundos_s = String(segs);
-    if (segundos_s.length() == 2) {
-      // Prepare the character array (the buffer) 
-      char char_array[segundos_s.length()];
-      // Copy it over 
-      segundos_s.toCharArray(char_array, segundos_s.length());
-
-      dig.digit[2] = String(char_array[0]).toInt();
-      dig.digit[3] = String(char_array[1]).toInt();
+    //Serial.print("segundos ### 2 -> "); Serial.println(segundos_s);
+    if (segundos_s.length() == 2) {      // prueba
+      String n1 = segundos_s.substring(0,1);
+      String n2 = segundos_s.substring(1,2);
+      /*
+      Serial.print("string segundos n1 n2 -> ");
+      Serial.print(n1);
+      Serial.print(" ");
+      Serial.print(n2);*/
+      dig.digit[2] = n1.toInt();
+      dig.digit[3] = n2.toInt();
     } else if (segundos_s.length() == 1) {
       //split
       dig.digit[3] = segundos_s.toInt();
     } 
-  }    
-  /*
-  for (int i=0; i < 4; i++) {
-    d = n / pow(10,3-i);
-    zeros += d;
-    n = n - d * pow(10,3-i);
-    if (zeros != 0 || i == 3) {
-      dig.digit[i]=d;
-    } else {
-      dig.digit[i]=10;
-    }
-    if(dig.digit[2] == 6){
-      delay(962);
-      dig.digit[2] == 0;
-    }
-    if(dig.digit[i] == dig.digit[2]){
-      if(dig.digit[i] == 6){
-        dig.digit[i] = 0;
-      }
-    }
-    if(dig.digit[i] == dig.digit[0]){
-      if(dig.digit[i] == 6){
-        dig.digit[i] = 5;
-      }
-    }
-*/
+  }
   return dig;
-  
 }
 
 // IMPRIMER LOS 4 DIGITOS EN EL DISPLAY 
 void PrintNumber(int n, int time) {
-
   struct struct_digits dig;
   dig = IntToDigits(n); // convierte el numero a un digito
-  for (int i=0; i<= time/20; i++) {
-    Serial.print("PrintNumber i -> ");
-    Serial.println(i);
+  //Serial.print("PrintNumber IntToDigits dig -> "); Serial.print(dig.digit[0]); Serial.print(" "); Serial.print(dig.digit[1]); 
+  //Serial.print(" "); Serial.print(dig.digit[2]); Serial.print(" "); Serial.println(dig.digit[3]); 
+  int tm = time/20;
+  //Serial.print("PrintNumber time /// tm -> "); Serial.print(time); Serial.print(" /// "); Serial.print(tm);
+  for (int i=0; i<= tm; i++) {
+    //Serial.print("PrintNumber i -> "); Serial.println(i);
     if (digitalRead(button2)==LOW) { // BOTON 2 resetear timer
       return;
     }
     for (int j=0; j<4; j++) {
       SwitchDigit(j);
       lightNumber(dig.digit[j]); // se muestra el digito
-      Serial.print("PrintNumber dig.digit[j] -> ");
-      Serial.println(dig.digit[j]);
+      //Serial.print("PrintNumber dig.digit[j] -> ");
+      //Serial.println(dig.digit[j]);
       delay(5);
     }
   }
@@ -428,7 +431,8 @@ void PrintNumber(int n, int time) {
 
 bool Countdown(int n, int del){
   for (int q=n; q>0; q--){ // for donde disminuye el valor del conteo (Timer)
-    PrintNumber(q,del); // se muestra el valor en el disaplay
+    Serial.print("countdown -> "); Serial.println(q);
+    PrintNumber(q,del); // se muestra el valor en el display
     if (digitalRead(button2)==LOW) { // BOTON 2 de reset
       return false;
     }
@@ -444,31 +448,28 @@ bool Countdown(int n, int del){
 void reset() {
   int m, zeros, d, pressed3 = 0, pressed4 = 0; // valores de 
   m=countdown_time;
-  struct struct_digits dig;
-  
-  Serial.print("reset countdown_time -> ");
-  Serial.println(countdown_time);
-  Serial.print("reset countdown_time -> ");
-  Serial.println(countdown_time);
+  struct struct_digits dig, dig2;
+  Serial.print("reset countdown_time -> "); Serial.println(countdown_time);
 
   dig = IntToDigits(countdown_time); // conviente el tiempo de conteo (124 default) en un digito
-  Serial.print("reset dig -> ");
-  Serial.print(dig.digit[0]);
-  Serial.print(" ");
-  Serial.print(dig.digit[1]);
-  Serial.print(" ");
-  Serial.print(dig.digit[2]);
-  Serial.print(" ");
-  Serial.println(dig.digit[3]);
+  dig2 = IntToDigits(rest_time);
 
   while (digitalRead(button1)==HIGH) { // BOTON 1 -> empezar timer
-
-    for (int j=0; j<4; j++) { // SE SETEAN LOS VALORES
+    // RESET FUNCION ---------------------------\*
+    delay(2000);
+    for (int j=0; j<4; j++) { // SE RESETEAN LOS VALORES
       SwitchDigit(j);
       lightNumber(dig.digit[j]);
       delay(5);
     }
-    
+    delay(2000);
+    for (int j=0; j<4; j++) { // SE RESETEAN LOS VALORES
+      SwitchDigit(j);
+      lightNumber(dig2.digit[j]);
+      delay(5);
+    }
+    // FIN RESET FUNCION ----------------------/*
+    // INCIO DEL ESPACIO DEL DIMMER
     if (digitalRead(button3)==LOW) {  // BOTON 3 -> incrementar el tiempo
       if (pressed3 == 0 || pressed3 > 30) {
         if (countdown_time > 0) {
@@ -486,13 +487,13 @@ void reset() {
       } 
       pressed4 += 1;
     }
-    if (digitalRead(button3)==HIGH) {
+    // FIN DEL ESPACIO DEL DIMMER
+    if (digitalRead(button3)==HIGH) { // BOTON 3 -> INCREMENTAR
       pressed3=0;
     }
-    if (digitalRead(button4)==HIGH) {
+    if (digitalRead(button4)==HIGH) { // BOTON 4 -> DECREMENTAR
       pressed4=0;
     }
-    
   }
 }
 
