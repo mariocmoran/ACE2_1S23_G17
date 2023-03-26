@@ -4,7 +4,7 @@ LABORATORIO ARQUITECTURA DE COMPUTADORES Y ENSAMBLADORES 2 Sección N
 ## Grupo 17
 ### Integrantes
 
-| Nombre                           | Carné                                      |
+| Nombre                           | Carnet                                     |
 |:--------------------------------:|:------------------------------------------:|
 | Kevin Steve Martínez Lemus       | 202004816                  			  	      |
 | Mario Cesar Moran Porras         | 202010793                  			  	      |
