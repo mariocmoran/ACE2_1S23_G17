@@ -6,8 +6,8 @@ from flask_cors import CORS,cross_origin
 
 
 usuario_global = ""
-tiempoTrabajo_global = 0
-tiempoDescanso_global = 0
+tiempoTrabajo_global = 45
+tiempoDescanso_global = 15
 
 def create_app():
     app = Flask(__name__)
@@ -175,13 +175,13 @@ def actualizarE():
 @app.route("/tiempot",methods=["PUT"])
 def actualizarTT():
     try:
-          cursor = conexion.connection.cursor() # no es nesesario el usuario pero para confirmar que se esta enviando bien
-          sql = "UPDATE Pomodoro SET Tiempo_Trabajo = %s WHERE id = (SELECT MAX(id) FROM Pomodoro) AND Usuario = %s"
-          global usuario_global
-          global tiempoTrabajo_global
-          cursor.execute(sql, (tiempoTrabajo_global, usuario_global))
-          conexion.connection.commit()  # Confirma la acción de inserción.
-          return jsonify({"Mensaje":"Actualizacion tiempoT"})
+        cursor = conexion.connection.cursor() # no es nesesario el usuario pero para confirmar que se esta enviando bien
+        sql = "UPDATE Pomodoro SET Tiempo_Trabajo = %s WHERE id = (SELECT MAX(id) FROM Pomodoro) AND Usuario = %s"
+        global usuario_global
+        global tiempoTrabajo_global
+        cursor.execute(sql, (tiempoTrabajo_global, usuario_global))
+        conexion.connection.commit()  # Confirma la acción de inserción.
+        return jsonify({"Mensaje":"Actualizacion tiempoT"})
 
 
     except Exception as ex:
@@ -196,6 +196,27 @@ def actualizarTTD():
     tiempoTrabajo_global = (request.json["Tiempo_Trabajo"])
     tiempoDescanso_global = (request.json["Tiempo_Descanso"])
     return jsonify({"Mensaje":"Se actualizaron los tiempos"})
+
+# obtener Tiempo Trabajo y Descanso
+@cross_origin
+@app.route("/obtenerTTD",methods=["GET"])
+def obtenerTTrabajoDescanso():
+    #global usuario_global
+    global tiempoTrabajo_global
+    global tiempoDescanso_global
+    try:
+        #cursor = conexion.connection.cursor()
+        #sql= "SELECT Tiempo_Trabajo, Tiempo_Descanso FROM Pomodoro WHERE id = (SELECT MAX(id) FROM Pomodoro WHERE Usuario = \""+usuario_global+"\")"
+        #cursor.execute(sql)
+        #dato = cursor.fetchone();
+        #print(dato)
+        dator = {"Tiempo_Trabajo": tiempoTrabajo_global, "Tiempo_Descanso": tiempoDescanso_global}
+        print(dator)
+        return jsonify(dator)
+
+
+    except Exception as ex:
+        return jsonify({"Mensaje":"Error al obtener TT y TD"})
 
 # actualizar el usuario del ultimo pomodoro ingresado,
 @cross_origin
@@ -241,3 +262,4 @@ def home():
         return jsonify({'message': 'Hello, World!'})
     else:
         return jsonify({'message': 'Error de conexion'})
+
