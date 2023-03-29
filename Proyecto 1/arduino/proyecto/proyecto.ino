@@ -1,10 +1,24 @@
 #include <math.h>
+#include <ArduinoJson.h>
+#include "WiFiEsp.h"
+#include "SoftwareSerial.h"
 
 int digit_pin[] = {6, 9, 10, 11}; // PWM Display digit pins from left to right
-int speakerPin = 15; // PIN DEL BUZZER
+//int speakerPin = 15; // PIN DEL BUZZER
 
 #define DIGIT_ON  LOW
 #define DIGIT_OFF  HIGH
+
+// conexion WIFI -----------------------------------------------------------------------
+char ssid[] = "CLARO1_6DBA95";             // your network SSID (name)
+char pass[] = "64081QiSvy";             // your network password
+int status = WL_IDLE_STATUS;          // the Wifi radio's status
+bool isConnected = false;
+char server[] = "192.168.1.8:3000";
+// Initialize the Ethernet client object
+WiFiEspClient client;
+StaticJsonDocument<500> doc;
+StaticJsonDocument<500> doc_create;
 
 // CANCION DE FINALIZACION --------------------------------------------------------------
 int tempo = 180;
@@ -108,7 +122,6 @@ int melody[] = {
 int notes = sizeof(melody) / sizeof(melody[0]) / 2;
 int wholenote = (60000 * 4) / tempo;
 int divider = 0, noteDuration = 0;
-
 //----------------------------------------------------------------------------------------
 // SEGMENTOS PARA EL DISPLAY DE 3 BITS
 int segA = 2; 
@@ -124,19 +137,67 @@ int segG = 8;
 int button1=13; // INICIAR EL DISPLAY
 int button2=12; // RESETEAR EL DISPLAY
 int button3=16; // DURACION TOTAL POMODORO
-int button4=17;
+//int button4=17;
 //----------------------------------------------------------------------------------------
 const int buzzer = 24;// ALARMA BUZZER
 int dimmer = A1; // LECTURA DEL DIMMER
 bool working = false;
+// sensor IR
+const int pinIRd = 0; // D0
+const int pinIRa = A2; // A0
+int IRvalueA = 0;
+int IRvalueD = 0;
+// --------------------------------------------
+int tiempo_penalizacion_trabajo = 0;
+int tiempo_penalizacion_descanso = 0;
 //----------------------------------------------------------------------------------------
 int countdown_time = 45; // TIEMPO DE TRABAJO DEFAULT
 int rest_time = 15; // TIEMPO DE DESCANSO DEFAULT
 int total_time = 1; // TIEMPO TOTAL DEL POMODORO EN MINUTOS
+int no_pom = 1; // numero de pomodoro
+
+int sensor=14;
+//int detect=1;
 //----------------------------------------------------------------------------------------
 struct struct_digits { // STRUCT DONDE SE DEFINEN LOS DIGITOS
   int digit[4] = {0,0,0,0};
 };
+
+void sendRegister() {
+  WiFi.init(&Serial1);                                      // initialize ESP module
+  if (WiFi.status() == WL_NO_SHIELD) {                      // check for the presence of the shield
+    Serial.println("WiFi shield not present");              // If shield not present, don't continue
+    while (true);
+  }
+  while ( status != WL_CONNECTED) {                         // attempt to connect to WiFi network
+    Serial.print("Attempting to connect to WPA SSID: ");    // Print message to serial monitor
+    Serial.println(ssid);                                   // Print SSID to serial monitor
+    status = WiFi.begin(ssid, pass);                        // Connect to WPA/WPA2 network
+  }
+  Serial.println("You're connected to the network");        // Print success message to serial monitor
+  Serial.println();
+  Serial.println("Starting connection to server...");
+  // if you get a connection, report back via serial
+  client.setTimeout(10000);
+  if (client.connect(server, 3000)) {
+    Serial.println("Connected to server");
+    // Make a HTTP request
+    client.println("GET /ejecutar HTTP/1.1");
+    client.println("Host: 192.168.1.8:3000");
+    client.println("Connection: close");
+    client.println();
+    delay(1000);
+  }  
+}
+
+void generarJsonRegistro() {
+  doc_create["Estado"] = IRvalueD; // IRvalueD
+  doc_create["No_Pomodoro"] = no_pom;
+  doc_create["Penalizacion_No_P"] = tiempo_penalizacion_descanso;
+  doc_create["Penalizacion_No_S"] = tiempo_penalizacion_trabajo;
+  doc_create["Tiempo_Descanso"] = rest_time;
+  doc_create["Tiempo_Trabajo"] = countdown_time;
+}
 
 void stopWorkingAlarm(){
   tone(buzzer,2000,500); //tone(pin,frequency,duration)
@@ -194,14 +255,20 @@ void setup() {
   }
 
   //PIN DE SALIDA PARA EL BUZZER
-  pinMode(speakerPin, OUTPUT);
-  //PIN ENTRADA ANALOGICA DEL DIMMER
+  pinMode(buzzer, OUTPUT);
+  //PIN DE SENSOR IR
+  pinMode(sensor, INPUT);
 
   // PINES DE ENTARDA PARA LOS BOTONES
   pinMode(button1,INPUT_PULLUP);
   pinMode(button2,INPUT_PULLUP);
   pinMode(button3,INPUT_PULLUP);
-  pinMode(button4,INPUT_PULLUP);
+  //pinMode(button4,INPUT_PULLUP);
+  pinMode(pinIRd,INPUT);
+  pinMode(pinIRa,INPUT);
+  
+  doc["Tiempo_Trabajo"] = 45;
+  doc["Tiempo_Descanso"] = 15;
 }
 
 // ENCENDER LOS SEGMENTOS DEL DISPLAY
@@ -336,8 +403,8 @@ void SwitchDigit(int digit) {
 
 // STRUCT 
 struct struct_digits IntToDigits(int n){
-  Serial.print("struct_digits n -> ");
-  Serial.println(n);
+  //Serial.print("struct_digits n -> ");
+  //Serial.println(n);
   struct struct_digits dig; 
   int zeros=0;
   int d;
@@ -442,13 +509,48 @@ void PrintNumber(int n, int time) {
  
 // TEMPORIZADOR
 bool Countdown(int n, int del){
+  bool sentado = false;
   for (int q=n; q>0; q--){ // for donde disminuye el valor del conteo (Timer)
-    Serial.print("countdown -> "); Serial.println(q);
+    //Serial.print("countdown -> "); Serial.println(q);
     PrintNumber(q,del); // se muestra el valor en el display
-    Serial.print("button 2 respones -> "); Serial.println(digitalRead(button2));
+    //Serial.print("button 2 respones -> "); Serial.println(digitalRead(button2));
     if (digitalRead(button2)==LOW) { // BOTON 2 de reset
       return false;
     }
+    // calculo de penalizacion
+    // validar si es descanso o trabajo
+    /* luego sustituir el digitalRead(button1) por la lecutra del sensor donde:
+      HIGH -> PARADO
+      LOW -> SENTADO      
+    */
+    
+    IRvalueA = analogRead(pinIRa);
+    IRvalueD = digitalRead(pinIRd);
+    if (IRvalueD == 0) {
+      sentado = true;
+    } else {
+      sentado = false;      
+    }
+    
+    if (working  && !sentado) {
+      tiempo_penalizacion_trabajo++;
+    } else if (!working && sentado) {
+      tiempo_penalizacion_descanso++;
+    }
+
+    if (isConnected) {      
+      sendRegister();
+      while (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+      }
+    }
+  
+    if ((q%5) == 0) {
+      //Serial.println("enviando registro");
+      generarJsonRegistro();
+      serializeJson(doc_create, Serial);      
+    }    
   }
   return true;
 }
@@ -462,10 +564,34 @@ void setTotalTime(int dimmer_val) {
   }
 }
 
+// LECTURA DE SENSORES IR
+/*
+void sensoresIR() {
+  detect = digitalRead(sensor);
+  if (detect == LOW) {
+    Serial.print(sensor);
+    Serial.print(" ");
+    Serial.print(detect);
+    Serial.print(" ");
+    Serial.print(digitalRead(sensor));
+    Serial.println(" -> NO");
+  } else if (detect == HIGH) 
+    Serial.print(sensor);
+    Serial.print(" ");{
+    Serial.print(detect);
+    Serial.print(" ");
+    Serial.print(digitalRead(sensor));
+    Serial.println(" -> SI");
+  }
+}
+*/
 // FUNCION DE RESET
 void reset() {
   int m, zeros, d, pressed3 = 0, pressed4 = 0; // valores de 
   m=countdown_time;
+  working = false;
+  tiempo_penalizacion_descanso = 0;
+  tiempo_penalizacion_trabajo = 0;
   struct struct_digits dig, dig2;
   Serial.print("reset countdown_time -> "); Serial.println(countdown_time);
 
@@ -473,8 +599,9 @@ void reset() {
   dig2 = IntToDigits(rest_time);
 
   bool ajuste_duracion = false;
-
-  while (digitalRead(button1)==HIGH) { // BOTON 1 -> empezar timer
+  bool sentado = false;
+  while (!sentado) { // button1 sensor -> mientras no este sentado
+    //sensoresIR();
     // RESET FUNCION ---------------------------\*
     PrintNumber(countdown_time, 1000);
     PrintNumber(rest_time, 1000);
@@ -494,6 +621,21 @@ void reset() {
       }
     }
     // FIN DEL ESPACIO DEL DIMMER
+    /* lectura sensor ************************** */
+    IRvalueA = analogRead(pinIRa);
+    IRvalueD = digitalRead(pinIRd);
+    /*
+    Serial.print("Analog Reading=");
+    Serial.print(IRvalueA);
+    Serial.print("\t Digital Reading=");
+    Serial.println(IRvalueD);
+    */
+    if (IRvalueD == 0) {
+      sentado = true;
+    }
+    /* ****************************************** */
+    // void generarJsonRegistro(int p_working, int p_resting, int state, int time_work, int time_rest, int num)
+        
   }
 }
 
@@ -504,37 +646,65 @@ void loop(){
     reset();
     //PRIMER POMODORO
     startWorkingAlarm();
+    working = true;
+    no_pom = 1;
     while (!Countdown(countdown_time,962)) {
       reset();
     }
     stopWorkingAlarm();
+    working = false;
     while (!Countdown(rest_time,962)) {
       goto inicio;
     }
+    generarJsonRegistro();
+    serializeJson(doc_create, Serial);  
     //SEGUNDO POMODORO
     startWorkingAlarm();
+    working = true;
+    no_pom = 2;
     while (!Countdown(countdown_time,962)) {
       goto inicio;
     }
     stopWorkingAlarm();
+    working = false;
+    
     while (!Countdown(rest_time,962)) {
       goto inicio;
     }
+    generarJsonRegistro();
+    serializeJson(doc_create, Serial);  
     //TERCER POMODORO
     startWorkingAlarm();
+    working = true;
+    no_pom = 3;
     while (!Countdown(countdown_time,962)) {
       goto inicio;
     }
     stopWorkingAlarm();
+    working = false;
     while (!Countdown(rest_time,962)) {
       goto inicio;
     }
+    generarJsonRegistro();
+    serializeJson(doc_create, Serial);  
     //CUARTO POMODORO
     startWorkingAlarm();
+    working = true;
+    no_pom = 4;
     while (!Countdown(countdown_time,962)) {
       goto inicio;
     }
+    stopWorkingAlarm();
+    working = false;
+    while (!Countdown(rest_time,962)) {
+      goto inicio;
+    }
+    generarJsonRegistro();
+    serializeJson(doc_create, Serial); 
     finishAlarm();
+
+    Serial.print("penalizacion trabajo -> "); Serial.println(tiempo_penalizacion_trabajo);
+    Serial.print("penalizacion descanso -> "); Serial.println(tiempo_penalizacion_descanso);
     while (digitalRead(button2)==1){};
 }
 
@@ -542,6 +712,4 @@ void loop(){
   BOTON 1  -> START
   BOTON 2  -> RESET
   BOTON 3  -> AJUSTE TIEMPO TOTAL
-  BOTON 4  -> 
 */
- 
