@@ -17,7 +17,9 @@ bool isConnected = false;
 char server[] = "192.168.1.8:3000";
 // Initialize the Ethernet client object
 WiFiEspClient client;
-StaticJsonDocument<500> doc;
+const int BUFFER_SIZE = 256;
+char buffer[BUFFER_SIZE];
+DynamicJsonDocument doc(BUFFER_SIZE);
 StaticJsonDocument<500> doc_create;
 
 // CANCION DE FINALIZACION --------------------------------------------------------------
@@ -635,7 +637,9 @@ void reset() {
     }
     /* ****************************************** */
     // void generarJsonRegistro(int p_working, int p_resting, int state, int time_work, int time_rest, int num)
-        
+    int bytes_read = Serial.readBytesUntil('\n', buffer, BUFFER_SIZE);
+    // Parse the JSON data
+    DeserializationError error = deserializeJson(doc, buffer, bytes_read);
   }
 }
 
