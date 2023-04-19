@@ -5,6 +5,9 @@ char ssid[] = "CLARO1_6DBA95";             // your network SSID (name)
 char pass[] = "64081QiSvy";             // your network password
 int status = WL_IDLE_STATUS;          // the Wifi radio's status
 
+char server[] = "arduino.tips";
+// Initialize the Ethernet client object
+WiFiEspClient client;
 // ********************************************************* INITIALIZE *********************************************************
 void setup() {
   Serial.begin(115200);                                     // initialize serial 0 for debugging
@@ -20,12 +23,45 @@ void setup() {
     status = WiFi.begin(ssid, pass);                        // Connect to WPA/WPA2 network
   }
   Serial.println("You're connected to the network");        // Print success message to serial monitor
+
+  // ===========================================================================>>
+  // ===========================================================================>>
+
+  printWifiStatus();
+
+  Serial.println();
+  Serial.println("Starting connection to server...");
+  // if you get a connection, report back via serial
+  if (client.connect(server, 80)) {
+    Serial.println("Connected to server");
+    // Make a HTTP request
+    client.println("GET /asciilogo.txt HTTP/1.1");
+    client.println("Host: arduino.tips");
+    client.println("Accept: /");
+    client.println();
+  }
+
 }
 
 // ********************************************************* MAIN LOOP *********************************************************
 void loop()
 {
   // check the network connection once every 10 seconds
+  while (client.available()) {
+    char c = client.read();
+    Serial.write(c);
+    Serial.println(" - * - * - * - * - * -"); 
+  }
+
+  // if the server's disconnected, stop the client
+  if (!client.connected()) {
+    Serial.println();
+    Serial.println("Disconnecting from server...");
+    client.stop();
+
+    // do nothing forevermore
+  }
+  
   Serial.println();
   printCurrentNet();
   printWifiData();
@@ -70,4 +106,23 @@ void printCurrentNet()
   long rssi = WiFi.RSSI();
   Serial.print("Signal strength (RSSI): ");
   Serial.println(rssi);
+}
+
+void printWifiStatus()
+{
+  // print the SSID of the network you're attached to
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength
+  long rssi = WiFi.RSSI();
+  Serial.print("Signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+  Serial.println("");
 }
