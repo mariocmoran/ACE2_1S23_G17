@@ -14,7 +14,7 @@ char ssid[] = "CLARO1_6DBA95";             // your network SSID (name)
 char pass[] = "64081QiSvy";             // your network password
 int status = WL_IDLE_STATUS;          // the Wifi radio's status
 bool isConnected = false;
-char server[] = "192.168.1.8:3000";
+char server[] = "http://grupo17.pythonanywhere.com";
 // Initialize the Ethernet client object
 WiFiEspClient client;
 const int BUFFER_SIZE = 256;
@@ -153,9 +153,9 @@ int IRvalueD = 0;
 int tiempo_penalizacion_trabajo = 0;
 int tiempo_penalizacion_descanso = 0;
 //----------------------------------------------------------------------------------------
-int countdown_time = 45; // TIEMPO DE TRABAJO DEFAULT
-int rest_time = 15; // TIEMPO DE DESCANSO DEFAULT
-int total_time = 1; // TIEMPO TOTAL DEL POMODORO EN MINUTOS
+int countdown_time = 120; // TIEMPO DE TRABAJO DEFAULT
+int rest_time = 60; // TIEMPO DE DESCANSO DEFAULT
+int total_time = 2; // TIEMPO TOTAL DEL POMODORO EN MINUTOS
 int no_pom = 1; // numero de pomodoro
 
 int sensor=14;
@@ -184,9 +184,9 @@ void sendRegister() {
   if (client.connect(server, 3000)) {
     Serial.println("Connected to server");
     // Make a HTTP request
-    client.println("GET /ejecutar HTTP/1.1");
-    client.println("Host: 192.168.1.8:3000");
-    client.println("Connection: close");
+    client.println("POST /data HTTP/1.1");
+    client.println("Host: http://grupo17.pythonanywhere.com");
+    client.print("Body: ");
     client.println();
     delay(1000);
   }  
