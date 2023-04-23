@@ -23,13 +23,15 @@ void setup() {
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED){
-    HTTPClient http; //Instancia de la clase HTTPClient que sirve para inicializar y cerrar una conexión
+    // llamar a la peticion
+    HTTPClient http;
     http.begin(wifiClient, "http://grupo17.pythonanywhere.com");
     int httpCod = http.GET();
     Serial.print("Codigo HTTP: ");
     Serial.println(httpCod);
-    
+    // se verifica la respuesta
     if (httpCod > 0){
+      // se lee la respuesta
       const size_t document = JSON_OBJECT_SIZE(15);
       DynamicJsonDocument jsonDocument (document);
       auto error = deserializeJson(jsonDocument, http.getString());
@@ -38,7 +40,7 @@ void loop() {
         Serial.println(error.c_str());
         return;
       }
-
+      // se obtiene la respuesta
       const char* message = jsonDocument["message"];
 
       Serial.print("mensaje: ");
