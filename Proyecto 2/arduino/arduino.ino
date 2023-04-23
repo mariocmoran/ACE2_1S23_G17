@@ -1,128 +1,51 @@
-#include "WiFiEsp.h"
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
+#include <WiFiClient.h>
 
-// ********************************************************* DEFINITIONS *********************************************************
-char ssid[] = "CLARO1_6DBA95";             // your network SSID (name)
-char pass[] = "64081QiSvy";             // your network password
-int status = WL_IDLE_STATUS;          // the Wifi radio's status
+WiFiClient wifiClient;
+const char* ssid="CLARO1_6DBA95";
+const char* password="64081QiSvy";
 
-char server[] = "arduino.tips";
-// Initialize the Ethernet client object
-WiFiEspClient client;
-// ********************************************************* INITIALIZE *********************************************************
 void setup() {
-  Serial.begin(115200);                                     // initialize serial 0 for debugging
-  Serial1.begin(115200);                                    // initialize serial 1 for ESP module
-  WiFi.init(&Serial1);                                      // initialize ESP module
-  if (WiFi.status() == WL_NO_SHIELD) {                      // check for the presence of the shield
-    Serial.println("WiFi shield not present");              // If shield not present, don't continue
-    while (true);
-  }
-  while ( status != WL_CONNECTED) {                         // attempt to connect to WiFi network
-    Serial.print("Attempting to connect to WPA SSID: ");    // Print message to serial monitor
-    Serial.println(ssid);                                   // Print SSID to serial monitor
-    status = WiFi.begin(ssid, pass);                        // Connect to WPA/WPA2 network
-  }
-  Serial.println("You're connected to the network");        // Print success message to serial monitor
-
-  // ===========================================================================>>
-  // ===========================================================================>>
-
-  printWifiStatus();
-
-  Serial.println();
-  Serial.println("Starting connection to server...");
-  // if you get a connection, report back via serial
-  if (client.connect(server, 80)) {
-    Serial.println("Connected to server");
-    // Make a HTTP request
-    client.println("GET /asciilogo.txt HTTP/1.1");
-    client.println("Host: arduino.tips");
-    client.println("Accept: /");
-    client.println();
-  }
-
-}
-
-// ********************************************************* MAIN LOOP *********************************************************
-void loop()
-{
-  // check the network connection once every 10 seconds
-  while (client.available()) {
-    char c = client.read();
-    Serial.write(c);
-    Serial.println(" - * - * - * - * - * -"); 
-  }
-
-  // if the server's disconnected, stop the client
-  if (!client.connected()) {
-    Serial.println();
-    Serial.println("Disconnecting from server...");
-    client.stop();
-
-    // do nothing forevermore
-  }
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
   
-  Serial.println();
-  printCurrentNet();
-  printWifiData();
-  
-  delay(10000);
+  Serial.print("Conectando a la red wifi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("¡Conexión exitosa!");
 }
 
-// *********************************************************  FUNCTION DEFINITIONS *********************************************************
-// Print WiFi data to serial Monitor  --------------------------------------------------------
-void printWifiData()
-{
-  // *** print your WiFi shield's IP address
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
+void loop() {
+  if (WiFi.status() == WL_CONNECTED){
+    HTTPClient http; //Instancia de la clase HTTPClient que sirve para inicializar y cerrar una conexión
+    http.begin(wifiClient, "http://grupo17.pythonanywhere.com");
+    int httpCod = http.GET();
+    Serial.print("Codigo HTTP: ");
+    Serial.println(httpCod);
+    
+    if (httpCod > 0){
+      const size_t document = JSON_OBJECT_SIZE(15);
+      DynamicJsonDocument jsonDocument (document);
+      auto error = deserializeJson(jsonDocument, http.getString());
+      if (error) {
+        Serial.print(F("deserializeJson() failed with code "));
+        Serial.println(error.c_str());
+        return;
+      }
 
-  // *** print your MAC address
-  byte mac[6];
-  WiFi.macAddress(mac);
-  char buf[20];
-  sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
-  Serial.print("MAC address: ");
-  Serial.println(buf);
-}
+      const char* message = jsonDocument["message"];
 
-// Print WiFi connection details to serial Monitor  --------------------------------------------------------
-void printCurrentNet()
-{
-  // *** print the SSID of the network you're attached to
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // *** print the MAC address of the router you're attached to
-  byte bssid[6];
-  WiFi.BSSID(bssid);
-  char buf[20];
-  sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", bssid[5], bssid[4], bssid[3], bssid[2], bssid[1], bssid[0]);
-  Serial.print("BSSID: ");
-  Serial.println(buf);
-
-  // *** print the received signal strength
-  long rssi = WiFi.RSSI();
-  Serial.print("Signal strength (RSSI): ");
-  Serial.println(rssi);
-}
-
-void printWifiStatus()
-{
-  // print the SSID of the network you're attached to
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  // print the received signal strength
-  long rssi = WiFi.RSSI();
-  Serial.print("Signal strength (RSSI):");
-  Serial.print(rssi);
-  Serial.println(" dBm");
+      Serial.print("mensaje: ");
+      Serial.println(message);
+    }
+    http.end(); //Close connection
+  }
+  delay(5000);
   Serial.println("");
 }
