@@ -1,0 +1,33 @@
+
+.divP{
+    text-align: center;
+    width: 90%;
+    margin:auto;
+    margin-top: 2%;
+}
+
+body{
+    background-color: #EBEDEF;
+}
+
+.divs{
+    width: 48%;
+    height: 48%; 
+    margin: 1%; 
+    background-color: #FDFEFE;
+    border-radius: 3%;
+    padding: 2%;
+}
+
+.divs2{
+    width: 31%;
+    height: 48%; 
+    margin: 1%; 
+    background-color: #FDFEFE;
+    border-radius: 3%;
+    padding: 2%;
+}
+
+h1{
+    color: #212F3C;
+}
