@@ -1,10 +1,9 @@
-
 verificacion de conexion a wifi
 	verificacion de activación de bomba (/getActivacion)
 	verificacion de desactivacion de la bomba (/getActivacion)
 	si la bomba esta activada
 		validacion tiempo de activación de la bomba
-		
+			
 		calculo humedad
 		calculo temperatura externa
 		calculo temperatura interna
