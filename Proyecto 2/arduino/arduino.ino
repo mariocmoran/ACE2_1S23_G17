@@ -2,13 +2,23 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
+//BMP280
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
+
 // conexion wifi
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 #include <WiFiClient.h>
 
-DHT dht(D2, DHT11);
+DHT dht(0, DHT11);
+Adafruit_BMP280 bmp;
+const int bomba = 14; // D0
+const int trigger = 12; // D6
+const int echo = 13; // D7
 
 WiFiClient wifiClient;
 const char* ssid="CLARO1_6DBA95";
@@ -30,6 +40,8 @@ int porcentajeAgua = 0;
 
 void setup() {
   Serial.begin(115200);
+  pinMode(bomba, OUTPUT);
+  digitalWrite(bomba, LOW);
   // conexion al wifi
   WiFi.begin(ssid, password);
   Serial.print("Conectando a la red wifi");
@@ -37,8 +49,18 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  dht.begin();
+  bmp.begin(0x76);
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
+                  Adafruit_BMP280::SAMPLING_X2,
+                  Adafruit_BMP280::SAMPLING_X16,
+                  Adafruit_BMP280::FILTER_X16,
+                  Adafruit_BMP280::STANDBY_MS_500);
   Serial.println("");
   Serial.println("¡Conexión exitosa!");
+  pinMode(trigger, OUTPUT);
+  pinMode(echo, INPUT);
+  digitalWrite(trigger, LOW);
 }
 
 void loop() {
@@ -55,62 +77,74 @@ void loop() {
         contadorTiempo = 0;
         tiempo = 0;
       }
-
+      digitalWrite(bomba, HIGH);
       // se guarda la activación y el tiempo actual
       POSTupdate(activacion, tiempo);
     } else { // está desactivado
+      digitalWrite(bomba, LOW);
       POSTupdate(activacion, 0);
+      contadorTiempo = 0;
     }
 
     // calculos
     Serial.println("calculos: ");
     calcularDHT11();
+    calcularBMP280();
     Serial.println("");
     // se guardan los datos
     POST();
 
     // si esta activado y el tiempo tambien esta activado y el tiempo se acabó -> se apaga todo
-    if (activacion == 1 && tiempo > 0 && contadorTiempo >= tiempo) { 
+    if (activacion == 1 && tiempo > 0 && contadorTiempo > tiempo) { 
       POSTupdate(0, 0);
+      digitalWrite(bomba, LOW);
+      contadorTiempo = 0;
       Serial.println("apagando");
     }
   }
 
-  dht.begin();
+  
   delay(1000);
   Serial.println("");
 }
 
+void calcularBMP280() {
+  tempExterna = (int)bmp.readTemperature();
+  Serial.print("tempExterna (C): ");
+  Serial.println(tempExterna);
+}
+
 void calcularDHT11() {
-  int chk = DHT11.read(DHT11PIN);
-  humedad = (int)DHT11.humidity;
+  humedad = (int)dht.readHumidity();
   Serial.print("Humidity (%): ");
   Serial.println(humedad);
-  tempInterna = (int)DHT11.temperature;
+  tempInterna = (int)dht.readTemperature();
   Serial.print("Temperature (C): ");
   Serial.println(tempInterna);
 }
 
 void POST() {
-  HTTPClient http;
-  http.begin(wifiClient, hostPOST);
-  http.addHeader("Content-Type", "application/json");
+  if (humedad <= 100 && tempExterna <= 65) {
+    HTTPClient http;
+    http.begin(wifiClient, hostPOST);
+    http.addHeader("Content-Type", "application/json");
 
-  // Data to send with HTTP POST
-  String data = "{\"temperatura_externa\":"+String(humedad);
-  data += ", \"temperatura_interna\":"+String(tempExterna);
-  data += ", \"humedad_tierra\":"+String(tempInterna);
-  data += ", \"porcentaje\":"+String(porcentajeAgua)+"}";
+    // Data to send with HTTP POST
+    String data = "{\"temperatura_externa\":"+String(tempExterna);
+    data += ", \"temperatura_interna\":"+String(tempInterna);
+    data += ", \"humedad_tierra\":"+String(humedad);
+    data += ", \"porcentaje\":"+String(porcentajeAgua)+"}";
 
-  // Send HTTP POST request
-  int httpResponseCode = http.POST(data);
+    // Send HTTP POST request
+    int httpResponseCode = http.POST(data);
 
-  //Serial.print(data);
-  Serial.print("HTTP POST Response code: ");
-  Serial.println(httpResponseCode);
-    
-  // Free resources
-  http.end();
+    //Serial.print(data);
+    Serial.print("HTTP POST Response code: ");
+    Serial.println(httpResponseCode);
+      
+    // Free resources
+    http.end();
+  }
 }
 
 void POSTupdate(int tiempo, int activacion) {
