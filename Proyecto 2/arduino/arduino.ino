@@ -43,7 +43,7 @@ const float VelSon = 34000.0;
 const float sensorLleno = 9.75; //cm
 const float sensorVacio = 17.0; //cm
 const float logitudAgua = sensorVacio-sensorLleno; //cm
-const float error = 2.5; //cm
+const float error = 2.2; //cm
 
 void setup() {
   Serial.begin(115200);
