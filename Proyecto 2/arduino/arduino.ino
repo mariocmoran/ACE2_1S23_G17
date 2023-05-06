@@ -14,11 +14,11 @@
 #include <ArduinoJson.h>
 #include <WiFiClient.h>
 
-DHT dht(0, DHT11);
-Adafruit_BMP280 bmp;
-const int bomba = 14; // D0
-const int trigger = 12; // D6
-const int echo = 13; // D7
+DHT dht(0, DHT11); // D3(0)
+Adafruit_BMP280 bmp; // D1(), D2() (IC2)
+const int bomba = 14; // D0(14)
+const int trigger = 12; // D6(12)
+const int echo = 13; // D7(13)
 
 WiFiClient wifiClient;
 const char* ssid="CLARO1_6DBA95";
@@ -37,6 +37,12 @@ int humedad = 0;
 int tempExterna = 0;
 int tempInterna = 0;
 int porcentajeAgua = 0;
+
+// CALCULOS PORCENTAJE DE AGUA
+const float VelSon = 34000.0;
+const float tanqueLleno = 8.5; //cm
+const float tanqueVacio = 0; //cm
+float diferencia = 0.085
 
 void setup() {
   Serial.begin(115200);
@@ -64,6 +70,7 @@ void setup() {
 }
 
 void loop() {
+  iniciarTrigger();
   // se verifica la conexion
   if (WiFi.status() == WL_CONNECTED){
     GET(); // se obtiene la activación y el tiempo
@@ -103,9 +110,22 @@ void loop() {
     }
   }
 
-  
   delay(1000);
   Serial.println("");
+}
+
+void iniciarTrigger() {
+  digitalWrite(PinTrig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PinTrig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PinTrig, LOW);
+
+  unsigned long tiempo = pulseIn(PinEcho, HIGH);
+  
+  float distancia = tiempo * 0.000001 * VelSon / 2.0;
+  Serial.print("distancia: ");
+  Serial.println(distancia);
 }
 
 void calcularBMP280() {
