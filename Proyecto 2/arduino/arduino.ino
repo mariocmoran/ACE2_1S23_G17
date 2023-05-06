@@ -40,9 +40,10 @@ int porcentajeAgua = 0;
 
 // CALCULOS PORCENTAJE DE AGUA
 const float VelSon = 34000.0;
-const float tanqueLleno = 8.5; //cm
-const float tanqueVacio = 0; //cm
-float diferencia = 0.085
+const float sensorLleno = 9.75; //cm
+const float sensorVacio = 17.0; //cm
+const float logitudAgua = sensorVacio-sensorLleno; //cm
+const float error = 2.5; //cm
 
 void setup() {
   Serial.begin(115200);
@@ -115,17 +116,29 @@ void loop() {
 }
 
 void iniciarTrigger() {
-  digitalWrite(PinTrig, LOW);
+  Serial.print("");
+  digitalWrite(trigger, LOW);
   delayMicroseconds(2);
-  digitalWrite(PinTrig, HIGH);
+  digitalWrite(trigger, HIGH);
   delayMicroseconds(10);
-  digitalWrite(PinTrig, LOW);
+  digitalWrite(trigger, LOW);
 
-  unsigned long tiempo = pulseIn(PinEcho, HIGH);
+  unsigned long tiempo = pulseIn(echo, HIGH);
   
   float distancia = tiempo * 0.000001 * VelSon / 2.0;
   Serial.print("distancia: ");
   Serial.println(distancia);
+  if (distancia - error <= sensorLleno) { // si la distancia es menor o igual es por que el tanque esta lleno
+    porcentajeAgua = 100;
+  } else if (distancia + error >= sensorVacio) {
+    porcentajeAgua = 0;
+  } else {
+    float res = ((sensorVacio-distancia)/logitudAgua)*100;
+    porcentajeAgua = (int)res;
+  }
+  Serial.print("porcentajeAgua: ");
+  Serial.println(porcentajeAgua);
+  Serial.println("");
 }
 
 void calcularBMP280() {

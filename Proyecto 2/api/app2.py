@@ -1,9 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_mysqldb import MySQL
 from flask_cors import CORS,cross_origin
-
-
-
+import pytz
+from datetime import datetime
 
 activacionBomba = 0 # 0 = False, 1 = True
 tiempoActivacion = 0
@@ -79,9 +78,14 @@ def ultimo_riego():
 @app.route('/add', methods=['POST'])
 def ingresar_info():
     print(request.json)
+    #obtenemos fecha y hora
+    now_utc = datetime.now(pytz.UTC)
+    tz = pytz.timezone('America/Guatemala')
+    now_guatemala = now_utc.astimezone(tz)
+    new_now = now_guatemala.strftime('%Y-%m-%d %H:%M:%S')
     try:
         cursor = conexion.connection.cursor()
-        sql = "INSERT INTO Datos (temperatura_externa, temperatura_interna, humedad_tierra, porcentaje, estado, fecha) VALUES (%s,%s,%s,%s,%s,NOW())"
+        sql = "INSERT INTO Datos (temperatura_externa, temperatura_interna, humedad_tierra, porcentaje, estado, fecha) VALUES (%s,%s,%s,%s,%s,%s)"
         global idRiego
         valores = (
                 request.json["temperatura_externa"],
@@ -89,6 +93,7 @@ def ingresar_info():
                 request.json["humedad_tierra"],
                 request.json["porcentaje"],
                 activacionBomba,
+                new_now,
                 )
 
         cursor.execute(sql, valores)
@@ -99,24 +104,32 @@ def ingresar_info():
         return jsonify({'mensaje': "Error 2"})
 
 
-# actualizar el tiempo de activacion y el estado de la bomba, cuando se envien valores por defecto 
+# actualizar el tiempo de activacion y el estado de la bomba, cuando se envien valores por defecto
 @cross_origin
-@app.route("/update",methods=["PUT"])
+@app.route("/update",methods=["POST"])
 def actualizar():
     global activacionBomba
     global tiempoActivacion
     tiempoActivacion = (request.json["tiempoActivacion"])
     activacionBomba = (request.json["activacionBomba"])
     return jsonify({"Mensaje":"Se actualizaron los datos"})
-    
+
 # actualizar el estado de la bomba individual, mas que todo cuando se active o se apague
 @cross_origin
-@app.route("/update1",methods=["PUT"])
+@app.route("/update1",methods=["POST"])
 def actualizarEstado():
     global activacionBomba
     global tiempoActivacion
     activacionBomba = (request.json["activacionBomba"])
     return jsonify({"Mensaje":"Se actualizaron los datos"})
+
+
+@cross_origin
+@app.route("/estadoRiego",methods=["GET"])
+def getEstado():
+    global activacionBomba
+    global tiempoActivacion
+    return jsonify({"activacion":activacionBomba, "tiempo": tiempoActivacion})
 
 
 # actualizar id del ultimo riego, por el momento no se utiliza
@@ -150,6 +163,3 @@ def home():
         return jsonify({'message': 'Hello, World!'})
     else:
         return jsonify({'message': 'Error de conexion'})
-    
-if __name__== '__main__':
-    app.run()
